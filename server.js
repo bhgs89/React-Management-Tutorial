@@ -29,9 +29,29 @@ const connection = mysql.createConnection({
 // 실제로 연결
 connection.connect();
 
-// 클라이언트가 server -> /api/customers 에 접속했을 때
+const multer = require('multer');
+// upload 폴더 설정
+const upload = multer({ dest: './upload' });
+
+// 클라이언트가 server -> /api/customers 에 접속했을 때, data 가져오기
 app.get('/api/customers', (req, res) => {
   connection.query('SELECT * FROM CUSTOMER', (err, rows, fields) => {
+    res.send(rows);
+  });
+});
+
+// 업로드 폴더 공유 => 이미지 폴더에서 해당 업로드 폴더 접근 가능
+app.use('/image', express.static('./upload'));
+
+app.post('/api/customers', upload.single('image'), (req, res) => {
+  let sql = 'INSERT INTO CUSTOMER VALUES (null, ?, ?, ?, ?, ?)';
+  let image = '/image/' + req.file.filename;
+  let name = req.body.name;
+  let birthday = req.body.birthday;
+  let gender = req.body.gender;
+  let job = req.body.job;
+  let params = [image, name, birthday, gender, job];
+  connection.query(sql, params, (err, rows, fields) => {
     res.send(rows);
   });
 });
